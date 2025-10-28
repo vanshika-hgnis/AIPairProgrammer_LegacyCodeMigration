@@ -1,0 +1,6 @@
+model:
+  provider: openai # or "local", "bedrock", etc.
+  model_name: gpt-5-turbo # whichever engine you use
+paths:
+  cdiget_exe: "C:/Tools/cdiget.exe"
+  output_dir: "./outputs"

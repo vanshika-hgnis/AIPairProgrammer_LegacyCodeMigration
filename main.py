@@ -1,54 +1,71 @@
-import subprocess, yaml, os, openai
-from datetime import datetime
+import typer, time, sys
+from rich.console import Console
+from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from repo_handler import clone_or_load_repo
+from vb_parser import extract_vb_methods
+from ai_refactor import translate_vb_to_csharp
+from report_generator import save_report
 
-# 1. Load config
-config = yaml.safe_load(open("config.yaml", "r"))
-MODEL_NAME = config["model"]["model_name"]
-CDIGET = config["paths"]["cdiget_exe"]
-OUT_DIR = config["paths"]["output_dir"]
-os.makedirs(OUT_DIR, exist_ok=True)
-
-
-def run_cdiget(path):
-    """Run cdiget and capture its text output."""
-    result = subprocess.run([CDIGET, path], capture_output=True, text=True)
-    if result.returncode != 0:
-        raise RuntimeError(result.stderr)
-    return result.stdout
+console = Console()
 
 
-def run_inference(code_text, prompt_path="prompts/migration_prompt.txt"):
-    """Send the cdiget output to an AI model for analysis."""
-    system_prompt = open(prompt_path).read()
-    client = openai.OpenAI()
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": code_text[:15000]},  # truncate for safety
-        ],
+def type_effect(text: str, color="cyan"):
+    """Claude-style typing effect"""
+    for ch in text:
+        console.print(ch, style=color, end="")
+        sys.stdout.flush()
+        time.sleep(0.015)
+    console.print()
+
+
+def main(
+    repo: str = typer.Option(
+        ..., "--repo", "-r", help="GitHub repo URL or local folder path"
+    ),
+):
+    """AI Pair Programmer – VB.NET → C# Refactor CLI"""
+    console.print(
+        Panel.fit(
+            "[bold bright_cyan]🤖  Internal AI Pair Programmer[/bold bright_cyan]"
+        )
     )
-    return response.choices[0].message.content
 
+    # 🧠 Clone / Load
+    with Progress(
+        SpinnerColumn(), TextColumn("[progress.description]{task.description}")
+    ) as progress:
+        progress.add_task("🧠  Cloning & loading repo...", total=None)
+        repo_path = clone_or_load_repo(repo, console)
+        progress.stop()
 
-def main():
-    project_path = r"C:\Users\lenovo\Desktop\SoftwareCourses\Reuse\Project\vbnet-whatsapp-chatbot-main"
-    print(f"Running cdiget on {project_path}...")
-    analysis_text = run_cdiget(project_path)
-    analysis_file = os.path.join(OUT_DIR, "vbnet-whatsapp-analysis.txt")
-    with open(analysis_file, "w", encoding="utf-8") as f:
-        f.write(analysis_text)
-    print(f"Analysis saved to {analysis_file}")
+    # 🔍 Parse
+    type_effect("🔍  Scanning VB.NET files...", "yellow")
+    vb_methods = extract_vb_methods(repo_path, console)
+    type_effect(f"✅  Found {len(vb_methods)} VB.NET methods.", "green")
 
-    print("Running model inference...")
-    insights = run_inference(analysis_text)
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    out_file = os.path.join(OUT_DIR, f"inference-{timestamp}.txt")
-    with open(out_file, "w", encoding="utf-8") as f:
-        f.write(insights)
-    print(f"AI insights saved to {out_file}\n")
-    print(insights)
+    # 🤖 Translate
+    results = []
+    with Progress(
+        SpinnerColumn(), TextColumn("[progress.description]{task.description}")
+    ) as progress:
+        t = progress.add_task("✨  Translating VB.NET → C# ...", total=len(vb_methods))
+        for method in vb_methods:
+            translation = translate_vb_to_csharp(method["code"])
+            results.append(
+                {"file": method["file"], "vb": method["code"], "cs": translation}
+            )
+            progress.advance(t)
+
+    # 📦 Report
+    type_effect("📦  Generating colorful report...", "magenta")
+    save_report(results)
+    console.print(
+        Panel.fit(
+            "[bold green]✅  Refactor complete! Report saved in /reports[/bold green]"
+        )
+    )
 
 
 if __name__ == "__main__":
-    main()
+    typer.run(main)

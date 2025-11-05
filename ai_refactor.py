@@ -10,12 +10,16 @@ import requests
 from config import OPENROUTER_API_KEY, BASE_URL, MODEL
 
 
+import requests
+from config import OPENROUTER_API_KEY, BASE_URL, MODEL
+
+
 def translate_vb_to_csharp(vb_code: str):
-    prompt = (
-        f"Convert this VB.NET code to clean, modern C#:\n\n```vbnet\n{vb_code}\n```"
-    )
+    prompt = f"Convert this VB.NET code to idiomatic C#:\n\n```vbnet\n{vb_code}\n```"
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "HTTP-Referer": "https://openrouter.ai",
+        "X-Title": "AI Pair Programmer",
         "Content-Type": "application/json",
     }
     body = {
@@ -23,18 +27,22 @@ def translate_vb_to_csharp(vb_code: str):
         "messages": [
             {
                 "role": "system",
-                "content": "You are an expert VB.NET to C# code refactoring assistant.",
+                "content": "You are an expert in VB.NET to C# refactoring. Output only valid C# code.",
             },
             {"role": "user", "content": prompt},
         ],
     }
 
-    response = requests.post(BASE_URL, headers=headers, json=body, timeout=60)
-    data = response.json()
     try:
-        return data["choices"][0]["message"]["content"].strip()
-    except Exception:
-        return "// Translation failed or incomplete."
+        r = requests.post(BASE_URL, headers=headers, json=body, timeout=120)
+        data = r.json()
+        print(data)
+        if "choices" in data:
+            return data["choices"][0]["message"]["content"].strip()
+        else:
+            return f"// Translation error: {data}"
+    except Exception as e:
+        return f"// Translation failed: {e}"
 
 
 app = typer.Typer()

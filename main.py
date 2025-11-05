@@ -7,6 +7,9 @@ from vb_parser import extract_vb_methods
 from ai_refactor import translate_vb_to_csharp
 from report_generator import save_report
 
+from agents.analyser_agent import analyze_repo_structure
+
+
 console = Console()
 
 
@@ -40,6 +43,8 @@ def main(
         progress.stop()
 
     # 🔍 Parse
+    type_effect("🧩  Analyzing project structure...", "magenta")
+    analyze_repo_structure(repo_path)
     type_effect("🔍  Scanning VB.NET files...", "yellow")
     vb_methods = extract_vb_methods(repo_path, console)
     type_effect(f"✅  Found {len(vb_methods)} VB.NET methods.", "green")

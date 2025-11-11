@@ -1,13 +1,13 @@
 import os, json, time, requests
 from rich.console import Console
 from dotenv import load_dotenv
-
+from pathlib import Path
 
 console = Console()
 import os
 
-load_dotenv()
-
+env_path = Path(__file__).resolve().parents[1] / ".env"
+load_dotenv(dotenv_path=env_path)
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 MODEL = os.getenv("MODEL")

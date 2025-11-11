@@ -1,9 +1,16 @@
 import os, json, time, requests
 from rich.console import Console
-from config import OPENROUTER_API_KEY
+from dotenv import load_dotenv
+
 
 console = Console()
-MODEL = "nousresearch/hermes-3-llama-3.1-405b:free"
+import os
+
+load_dotenv()
+
+
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+MODEL = os.getenv("MODEL")
 BASE_URL = "https://openrouter.ai/api/v1/chat/completions"
 MAX_RETRIES = 3
 RETRY_DELAY = 8
@@ -39,10 +46,9 @@ def summarize_file(file_path: str):
         }
 
         for attempt in range(1, MAX_RETRIES + 1):
+            resp = requests.post(BASE_URL, headers=headers, json=body, timeout=90)
             try:
-                resp = requests.post(BASE_URL, headers=headers, json=body, timeout=45)
                 data = resp.json()
-
                 if "choices" in data and data["choices"]:
                     summary = data["choices"][0]["message"]["content"].strip()
                     if len(summary) > 2:
@@ -50,6 +56,7 @@ def summarize_file(file_path: str):
 
                 if "error" in data:
                     msg = data["error"].get("message", "Unknown error")
+                    console.print(f"[red]API returned error:[/red] {msg}")
                     if "limit" in msg.lower() or "rate" in msg.lower():
                         console.print(
                             f"[yellow]Rate-limited. Retry {attempt}/{MAX_RETRIES} in {RETRY_DELAY}s...[/yellow]"
@@ -65,6 +72,8 @@ def summarize_file(file_path: str):
         return "⚠ No summary generated (timeout or rate limit)."
 
     except Exception as e:
+        console.print(f"[red]Network issue ({e}), retrying...[/red]")
+        time.sleep(RETRY_DELAY * attempt)
         return f"⚠ Exception while summarizing: {e}"
 
 

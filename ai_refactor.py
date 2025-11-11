@@ -7,11 +7,15 @@ from vb_parser import extract_vb_methods
 
 from report_generator import save_report
 import requests
-from config import OPENROUTER_API_KEY, BASE_URL, MODEL
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 
-import requests
-from config import OPENROUTER_API_KEY, BASE_URL, MODEL
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+MODEL = os.getenv("MODEL")
+BASE_URL = os.getenv("BASE_URL")
 
 
 def translate_vb_to_csharp(vb_code: str):

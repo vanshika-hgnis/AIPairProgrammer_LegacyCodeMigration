@@ -8,7 +8,6 @@ from agents.router_agent import detect_languages
 from agents.analyser_agent import analyze_repo_structure
 from agents.planner_agent import generate_migration_plan
 import networkx as nx
-from agents.migration_agent import generate_migration_report
 
 from textwrap import shorten
 from pyvis.network import Network
@@ -166,21 +165,23 @@ if st.session_state.summary:
             short_desc = shorten(desc, width=80, placeholder="…") if desc else ""
             tree_lines.append(f"{indent}    📄 {file} — {short_desc}")
 
+    joined_tree = "\n".join(tree_lines)
     scrollable_html = f"""
     <div style="
-        color:#00ffff;
-        background-color:#111;
-        padding:10px;
-        border-radius:8px;
-        font-family:monospace;
-        height:500px;
-        overflow-y:auto;
-        white-space:pre;
-        line-height:1.4;
+    color:#00ffff;
+    background-color:#111;
+    padding:10px;
+    border-radius:8px;
+    font-family:monospace;
+    height:500px;
+    overflow-y:auto;
+    white-space:pre;
+    line-height:1.4;
     ">
-    {'\n'.join(tree_lines)}
+    {joined_tree}
     </div>
     """
+
     st.markdown(scrollable_html, unsafe_allow_html=True)
 
     # ✅ Dependency Graph (separate, no summaries)

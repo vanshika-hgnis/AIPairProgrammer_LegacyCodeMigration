@@ -1,3 +1,4 @@
+# ai_refactor.py
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -9,45 +10,17 @@ from report_generator import save_report
 import requests
 from dotenv import load_dotenv
 import os
-
-load_dotenv()
-
-
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-MODEL = os.getenv("MODEL")
-BASE_URL = os.getenv("BASE_URL")
+from ai_provider import LLMProvider
+llm = LLMProvider()
 
 
 def translate_vb_to_csharp(vb_code: str):
     prompt = f"Convert this VB.NET code to idiomatic C#:\n\n```vbnet\n{vb_code}\n```"
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "HTTP-Referer": "https://openrouter.ai",
-        "X-Title": "AI Pair Programmer",
-        "Content-Type": "application/json",
-    }
-    body = {
-        "model": MODEL,
-        "messages": [
-            {
-                "role": "system",
-                "content": "You are an expert in VB.NET to C# refactoring. Output only valid C# code.",
-            },
-            {"role": "user", "content": prompt},
-        ],
-    }
-
     try:
-        r = requests.post(BASE_URL, headers=headers, json=body, timeout=120)
-        data = r.json()
-        print(data)
-        if "choices" in data:
-            return data["choices"][0]["message"]["content"].strip()
-        else:
-            return f"// Translation error: {data}"
+        return llm.generate(prompt)
     except Exception as e:
         return f"// Translation failed: {e}"
-
+    
 
 app = typer.Typer()
 console = Console()

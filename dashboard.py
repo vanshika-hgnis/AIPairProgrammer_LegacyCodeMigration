@@ -14,11 +14,6 @@ from pyvis.network import Network
 
 from agents.annotator_agent import annotate_repository
 
-## remove this later 
-
-print("DEBUG OpenRouter Key Prefix:", os.getenv("OPENROUTER_API_KEY")[:10])
-
-
 
 
 options = """

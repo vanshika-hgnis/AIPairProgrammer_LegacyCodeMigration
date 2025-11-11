@@ -3,6 +3,16 @@
 reports/
 
 
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# VS Code settings (optional)
+.vscode/
+
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

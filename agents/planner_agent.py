@@ -11,17 +11,16 @@ def generate_migration_plan(language_info, target_language):
     src_lang = language_info.get("primary", "Unknown")
 
     prompt = f"""
-    You are a senior software architect.
+    You are an AI pair programmer for legacy code migration.
+    Analyze the following codebase text and produce modernization advice:
     The current codebase is written in {src_lang}.
-    Generate a detailed, step-by-step migration plan to move it to {target_language}.
-    
+    Generate a detailed, step-by-step migration plan to move it to {target_language}. 
+    Limit it to 100 - 150 words
     Include:
     - Required tools and setup
     - Framework/library equivalents
-    - Common pitfalls
-    - Migration order (config → logic → UI → tests)
-    - Validation and optimization steps
-    
+    - Point out risky APIs, outdated packages, or VB-specific constructs.
+    - Identify the framework and patterns.-
     Output format: Markdown with clear section headers.
     """
 

@@ -1,0 +1,10 @@
+Objective: Analyze the backend codebase to identify best practices, potential improvements, and common pitfalls.
+
+Instructions:
+
+Review the backend codebase, focusing on the architecture, design patterns, and libraries used.
+Identify areas where best practices are followed and highlight them as examples of good code.
+Spot potential improvements in code organization, performance, scalability, or maintainability, and provide specific suggestions.
+Look for common pitfalls or anti-patterns in the backend code and offer alternative approaches.
+Provide code snippets to illustrate your findings and recommendations.
+Expected Output: A detailed report on the backend codebase, including best practices, potential improvements, and common pitfalls, along with illustrative code snippets and recommendations.

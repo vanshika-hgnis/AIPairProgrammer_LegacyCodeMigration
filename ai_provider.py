@@ -39,30 +39,49 @@ class LLMProvider:
 
         if not key:
             return "⚠ Gemini API key missing in environment."
+        clean_prompt = (
+        prompt.replace("```", "")      # remove code fences
+        .replace("\u0000", "")   # remove nulls
+        .replace("\r", " ")[:10000]  # trim to ~10 KB
+    )
 
         url = f"{base}/{model}:generateContent?key={key}"
-        payload = {"contents": [{"parts": [{"text": prompt[:12000]}]}]}
+        payload = {
+        "contents": [
+            {
+                "role": "user",  # ✅ required field!
+                "parts": [{"text": clean_prompt}]
+            }
+        ]
+    }
         headers = {"Content-Type": "application/json"}
 
         try:
             for attempt in range(3):
                 r = requests.post(url, headers=headers, json=payload, timeout=60)
                 if r.status_code == 429:
-                    time.sleep(8*(attempt+1))
+                    time.sleep(8 * (attempt + 1))
                     continue
-                r.raise_for_status()    
-                data = r.json()
+                if r.status_code >= 400:
+                # detailed message for debugging
+                    return f"⚠ Gemini network error: {r.status_code} {r.reason} | {r.text[:200]}"
+                r.raise_for_status()
 
+                data = r.json()
                 if "candidates" in data and len(data["candidates"]) > 0:
-                    return data["candidates"][0]["content"]["parts"][0]["text"]
-                return f"⚠ Unexpected Gemini response: {json.dumps(data)[:500]}"
+                    parts = data["candidates"][0].get("content", {}).get("parts", [])
+                    if parts and "text" in parts[0]:
+                        return parts[0]["text"].strip()
+                if "error" in data:
+                    return f"⚠ Gemini API error: {data['error'].get('message', 'unknown error')}"
+                return f"⚠ Unexpected Gemini response: {json.dumps(data)[:300]}"
 
         except requests.exceptions.RequestException as e:
             return f"⚠ Gemini network error: {e}"
 
-        except ValueError:
-        # JSON parsing error — server returned HTML or empty body
-            return f"⚠ Gemini response not JSON. Raw: {r.text[:500]}"
+        return "⚠ Gemini returned no content."
+
+
 
 
     # ---------- OpenRouter ----------

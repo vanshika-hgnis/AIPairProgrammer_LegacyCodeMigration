@@ -107,6 +107,7 @@ if st.button("🚀 Start Analysis"):
     st.session_state.summary = summary
     st.session_state.tree_text = tree_text
     term_log("✅ Analysis completed and saved to /reports")
+    time.sleep(5)
     annotate_repository(st.session_state.repo_path)
     term_log("✅ File summaries saved to reports/annotations.json")
 
@@ -122,7 +123,6 @@ if st.session_state.lang_info:
     col2.metric("Detected Files", sum(st.session_state.lang_info["count"].values()))
     st.code(count, language="json")
 
-# ---- Folder Structure ----
 # ---- Folder Structure ----
 if st.session_state.summary:
     st.divider()

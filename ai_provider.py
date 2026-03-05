@@ -10,7 +10,11 @@ load_dotenv()
 class LLMProvider:
     def __init__(self):
         self.provider = os.getenv("AI_PROVIDER", "gemini")  # gemini | openrouter | huggingface | ollama
-        self.api_key = os.getenv("GEMINI_API_KEY") or os.getenv("OPENROUTER_API_KEY")
+        self.api_key = (
+            os.getenv("GEMINI_API_KEY")
+            or os.getenv("OPENROUTER_API_KEY")
+            or os.getenv("HUGGINGFACE_API_KEY")
+        )
         self.model = os.getenv("MODEL", "gemini-2.0-flash-lite")
         self.base_urls = {
             "gemini": "https://generativelanguage.googleapis.com/v1beta/models",

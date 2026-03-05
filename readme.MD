@@ -1,90 +1,203 @@
-# Internal AI Pair Programmer at SAP for Legacy Code Migration
+# 🤖 Internal AI Pair Programmer — Legacy Code Migration
 
-Internal AI Pair Programmer — an assistant that understands legacy code and helps refactor or migrate it intelligently.
+An AI-powered pair programmer that understands legacy codebases and helps refactor or migrate them intelligently. Point it at a repository containing legacy code (e.g. VB.NET), and it will analyse the structure, detect dependencies, generate a migration plan, and produce translated C# output — all driven by a large language model of your choice.
 
-Analyze a large legacy codebase (e.g., VB.NET), understand its structure and dependencies, and then automatically (or semi-automatically) suggest or perform transformations into a modern stack (e.g., C# or .NET 8).
+![Dashboard screenshot](other/image.png)
 
-![alt text](other/image.png)
+---
 
-# 🧩 1️⃣ Your Current System (MVP Stage)
+## ✨ Features
 
-Pipeline:
-'''
-Repo → VB Parser → Translator (LLM) → Report
-'''
+- **Language Detection** – automatically identifies the primary and secondary languages in a repository.
+- **Project Analyser** – maps folder structure, files, and VB.NET `Imports` dependencies; outputs `reports/project_summary.json`.
+- **File Annotator** – uses an LLM to write a one-line summary for every source file and saves them to `reports/annotations.json`.
+- **Migration Planner** – generates a step-by-step, LLM-authored migration plan (saved to `reports/migration_plan.md`).
+- **VB.NET → C# Translator** – extracts every `Sub`/`Function` from `.vb` files and produces idiomatic C# equivalents; saves a timestamped Markdown report under `reports/`.
+- **Interactive Dashboard** – a Streamlit web UI with a live dependency graph, annotated file tree, and migration plan viewer.
+- **Multi-provider LLM support** – plug in Gemini, OpenRouter, Hugging Face, or a local Ollama model via environment variables.
 
-Core agent: “Translator Agent”
+---
 
-Works perfectly for direct function-level migration.
+## 🏗️ Architecture
 
-Lacks context awareness (it doesn’t know dependencies, architecture, or business logic).
+```
+GitHub Repo / Local Folder
+        │
+        ▼
+  repo_handler.py        ← clone or load the target repository
+        │
+        ├─► router_agent.py      ← detect languages
+        ├─► analyser_agent.py    ← build project structure & dependency map
+        ├─► annotator_agent.py   ← summarise every source file with an LLM
+        ├─► vb_parser.py         ← extract VB.NET methods
+        ├─► ai_refactor.py       ← translate VB.NET → C# via LLM
+        ├─► planner_agent.py     ← generate migration plan via LLM
+        └─► report_generator.py  ← save Markdown refactor report
+```
 
-No planning, no verification, no coordination.
+All LLM calls are routed through `ai_provider.py`, which selects the configured backend.
 
-# 🧠 2️⃣ Next Goal: “AI Migration Assistant v0.2”
+![Agent diagram](other/Agents.png)
 
-![alt text](other/Agents.png)
+---
 
-⚙️ 3️⃣ Phase-Wise Roadmap
-🧩 Phase 1 – Contextual Understanding (Today → Next 2 days)
+## 🛠️ Prerequisites
 
-Add a Project Analyzer stage that:
+| Requirement | Version |
+|---|---|
+| Python | 3.10 + |
+| Git | any recent version |
 
-Maps repo structure (forms, modules, classes, configs).
+> A valid API key for your chosen LLM provider is required (see [Configuration](#️-configuration)).
 
-Detects dependencies (Imports, .dll, .config references).
+---
 
-Outputs project_summary.json.
+## ⚙️ Setup
 
-You can integrate tree-sitter or Roslyn analyzers for deeper AST parsing.
+### 1. Clone this repository
 
-🧩 Phase 2 – Multi-Agent Orchestration (Week 1)
+```bash
+git clone https://github.com/vanshika-hgnis/AIPairProgrammer_LegacyCodeMigration.git
+cd AIPairProgrammer_LegacyCodeMigration
+```
 
-Use a Coordinator Agent to orchestrate LLM calls:
+### 2. Create and activate a virtual environment (recommended)
 
-Coordinator → Analyzer → Planner → Translator → Verifier → Reporter
+```bash
+python -m venv .venv
 
-Each step can be a Python class or micro-process communicating via shared JSON.
+# macOS / Linux
+source .venv/bin/activate
 
-🧠 Libraries to consider:
+# Windows
+.venv\Scripts\activate
+```
 
-LangChain / LlamaIndex / CrewAI / Autogen — for agent orchestration
+### 3. Install dependencies
 
-FastAPI or Flask backend — to serve multi-step migration jobs
+```bash
+pip install -r requirements.txt
+```
 
-🧩 Phase 3 – Semantic Migration & Context Retention
+### 4. Configure environment variables
 
-Add state memory so that when one agent translates a file, the next knows about class names, variables, and architecture context.
+Create a file named `.env` in the project root and fill in your values:
 
-Implementation idea:
+```dotenv
+# ── LLM Provider ──────────────────────────────────────────────
+# Options: gemini | openrouter | huggingface | ollama
+AI_PROVIDER=gemini
 
-Store extracted symbols / functions in a lightweight SQLite DB.
+# ── API Keys (only the one matching your provider is required) ─
+GEMINI_API_KEY=your_gemini_api_key_here
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+HUGGINGFACE_API_KEY=your_huggingface_api_key_here
 
-Each agent reads/writes state to a shared vector memory (via FAISS or Chroma).
+# ── Model selection (optional – sensible defaults are used) ────
+# Gemini default  : gemini-2.0-flash-lite
+# OpenRouter      : e.g. meta-llama/llama-3-8b-instruct
+# Hugging Face    : e.g. mistralai/Mistral-7B-Instruct-v0.1
+# Ollama          : e.g. llama3
+MODEL=gemini-2.0-flash-lite
+```
 
-🧩 Phase 4 – Validation & Modernization
+> **Ollama users:** make sure the Ollama server is running locally on `http://localhost:11434` before starting the tool.
 
-Plug in:
+---
 
-🧱 Roslyn CLI or dotnet build --dry-run to test generated code.
+## 🚀 Usage
 
-🧩 AutoFix Agent — uses analyzer feedback to patch code.
+### Option A — Interactive Dashboard (recommended)
 
-🧑‍💻 Modernization Patterns DB (mapping legacy → modern constructs).
+Launch the Streamlit web UI:
 
-🧩 Phase 5 – Optional GUI / VSCode Plugin
+```bash
+streamlit run dashboard.py
+```
 
-Wrap your CLI into a small dashboard:
+Then open [http://localhost:8501](http://localhost:8501) in your browser.
 
-FastAPI + Next.js for a web UI, or
+**Workflow inside the dashboard:**
+1. Paste a GitHub URL or a local folder path into the input box and click **🚀 Start Analysis**.
+2. The tool clones the repo, detects languages, analyses the project structure, and annotates every file.
+3. Browse the annotated file tree and the interactive dependency graph.
+4. Choose a migration target language and click **🧩 Generate Migration Plan**.
 
-VSCode extension using your backend REST API.
+### Option B — Command-line interface
 
-🧰 4️⃣ Tech Stack Upgrade
-Layer Recommended
-Core Agents Python + LangChain or Autogen
-Parser Tree-sitter / Roslyn
-Planning LLM Hermes-3 / Claude 3.5 / GPT-4o
-Storage SQLite + FAISS (symbol embedding cache)
-Verification dotnet SDK CLI
-Visualization Streamlit / Rich TUI
+Run the full pipeline (clone → parse → translate → report) from the terminal:
+
+```bash
+python main.py --repo https://github.com/your-org/legacy-vbnet-project
+```
+
+Use a local folder instead of a URL:
+
+```bash
+python main.py --repo /path/to/local/vbnet/project
+```
+
+**Output:** a timestamped Markdown report is written to the `reports/` directory.
+
+---
+
+## 📁 Project Structure
+
+```
+AIPairProgrammer_LegacyCodeMigration/
+├── agents/
+│   ├── analyser_agent.py    # Maps repo structure & VB.NET dependencies
+│   ├── annotator_agent.py   # LLM-based per-file summarisation
+│   ├── planner_agent.py     # Generates migration plan via LLM
+│   └── router_agent.py      # Detects primary/secondary languages
+├── other/
+│   ├── Agents.png           # Architecture diagram
+│   └── image.png            # Dashboard screenshot
+├── repos/                   # Cloned target repos land here (git-ignored)
+├── reports/                 # All generated reports land here (git-ignored)
+├── test/                    # Manual test scripts
+├── ai_provider.py           # Unified LLM client (Gemini / OpenRouter / HF / Ollama)
+├── ai_refactor.py           # VB.NET → C# translation logic
+├── dashboard.py             # Streamlit web UI
+├── main.py                  # CLI entry-point
+├── repo_handler.py          # Git clone / local folder loader
+├── report_generator.py      # Markdown report writer
+├── vb_parser.py             # Regex-based VB.NET method extractor
+├── requirements.txt         # Python dependencies
+└── .env                     # Your API keys (not committed)
+```
+
+---
+
+## 🔌 Supported LLM Providers
+
+| Provider | `AI_PROVIDER` value | Key env var |
+|---|---|---|
+| Google Gemini | `gemini` | `GEMINI_API_KEY` |
+| OpenRouter | `openrouter` | `OPENROUTER_API_KEY` |
+| Hugging Face Inference API | `huggingface` | `HUGGINGFACE_API_KEY` |
+| Ollama (local) | `ollama` | *(none – runs on localhost)* |
+
+---
+
+## 🗺️ Roadmap
+
+| Phase | Goal | Status |
+|---|---|---|
+| 1 | Contextual Understanding – project structure & dependency map | ✅ Done |
+| 2 | Multi-Agent Orchestration (Analyser → Planner → Translator) | ✅ Done |
+| 3 | Semantic Migration & context retention (SQLite / vector store) | 🔜 Planned |
+| 4 | Validation – Roslyn / `dotnet build` feedback loop | 🔜 Planned |
+| 5 | VSCode extension or Next.js web UI | 🔜 Planned |
+
+---
+
+## 🤝 Contributing
+
+Pull requests are welcome! Please open an issue first to discuss your proposed change.
+
+---
+
+## 📄 License
+
+This project is for internal use. Contact the repository owner for licensing information.

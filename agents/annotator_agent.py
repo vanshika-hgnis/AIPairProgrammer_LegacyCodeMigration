@@ -11,23 +11,28 @@ from pathlib import Path
 console = Console()
 env_path = Path(__file__).resolve().parents[1] / ".env"
 load_dotenv(dotenv_path=env_path)
-llm = LLMProvider()
 
 
 def summarize_file(file_path: str):
     """Locally parse the file to extract only relevant structural info, then send to LLM."""
+    llm = LLMProvider()
+
     try:
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             content = f.read()
 
         # 🔹 Keep only meaningful lines
         clean = "\n".join(
-            line for line in content.splitlines()
+            line
+            for line in content.splitlines()
             if not line.strip().startswith(("'", "//", "#")) and len(line.strip()) > 2
         )
 
         # 🔹 Extract only key parts (classes, functions, subs)
-        tokens = re.findall(r"(?i)(class\s+\w+|sub\s+\w+|function\s+\w+|public\s+\w+|private\s+\w+)", clean)
+        tokens = re.findall(
+            r"(?i)(class\s+\w+|sub\s+\w+|function\s+\w+|public\s+\w+|private\s+\w+)",
+            clean,
+        )
         snippet = ", ".join(tokens)[:800]
 
         file_name = os.path.basename(file_path)
@@ -52,7 +57,10 @@ def summarize_file(file_path: str):
 def annotate_repository(repo_path, extensions=[".vb", ".cs", ".py"], force=False):
     """Summarize each relevant file, caching results."""
     import json, time, os
-    console.print("[bold cyan]🧩 Annotator Agent: Generating file summaries...[/bold cyan]")
+
+    console.print(
+        "[bold cyan]🧩 Annotator Agent: Generating file summaries...[/bold cyan]"
+    )
 
     os.makedirs("reports", exist_ok=True)
     save_path = os.path.join("reports", "annotations.json")
@@ -79,7 +87,8 @@ def annotate_repository(repo_path, extensions=[".vb", ".cs", ".py"], force=False
                 continue
 
             summary = summarize_file(abs_path)
-            annotations[abs_path] = summary
+            rel_path = os.path.relpath(abs_path, repo_path)
+            annotations[rel_path] = summary
             console.print(f"[green]✔ {file}[/green]: {summary}")
             time.sleep(1.5)
 

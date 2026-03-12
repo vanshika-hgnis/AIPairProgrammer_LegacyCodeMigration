@@ -15,7 +15,6 @@ from pyvis.network import Network
 from agents.annotator_agent import annotate_repository
 
 
-
 options = """
 {
   "nodes": {
@@ -108,7 +107,9 @@ if st.button("🚀 Start Analysis"):
     st.session_state.tree_text = tree_text
     term_log("✅ Analysis completed and saved to /reports")
     time.sleep(5)
-    annotate_repository(st.session_state.repo_path)
+    # annotate_repository(st.session_state.repo_path)
+    annotate_repository(st.session_state.repo_path, force=True)
+    st.rerun()
     term_log("✅ File summaries saved to reports/annotations.json")
 
 # ---- Results Section ----
@@ -152,17 +153,8 @@ if st.session_state.summary:
 
         for file in sorted(files):
             abs_path = os.path.join(root, file)
-            variants = [
-                os.path.normpath(abs_path).lower(),
-                os.path.basename(abs_path).lower(),
-                os.path.relpath(abs_path, root_base).lower(),
-            ]
-
-            desc = ""
-            for v in variants:
-                if v in normalized_annotations:
-                    desc = normalized_annotations[v]
-                    break
+            rel = os.path.relpath(abs_path, root_base).lower()
+            desc = normalized_annotations.get(rel, "")
 
             short_desc = shorten(desc, width=80, placeholder="…") if desc else ""
             tree_lines.append(f"{indent}    📄 {file} — {short_desc}")

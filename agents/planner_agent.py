@@ -6,16 +6,26 @@ from ai_provider import LLMProvider
 console = Console()
 llm = LLMProvider()
 
+
 def generate_migration_plan(language_info, target_language):
     console.print("[bold cyan]🧩 Planner Agent: Drafting migration plan...[/bold cyan]")
     src_lang = language_info.get("primary", "Unknown")
+
+    annotations = {}
+    if os.path.exists("reports/annotations.json"):
+        annotations = json.load(open("reports/annotations.json"))
+    annot_text = "\n".join(f"{k}: {v}" for k, v in annotations.items())
 
     prompt = f"""
     You are an AI pair programmer for legacy code migration.
     Analyze the following codebase text and produce modernization advice:
     The current codebase is written in {src_lang}.
     Generate a detailed, step-by-step migration plan to move it to {target_language}. 
-    Limit it to 100 - 150 words
+    Limit it to  400 words
+    You are a senior software architect.
+    Below are summaries of the existing codebase:
+    {annot_text}
+    Generate a detailed migration plan from {src_lang} to {target_language}.
     Include:
     - Required tools and setup
     - Framework/library equivalents

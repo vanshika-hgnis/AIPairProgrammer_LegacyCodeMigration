@@ -4,7 +4,7 @@ An AI-powered pair programmer that understands legacy codebases and helps refact
 
 ## Demo
 
-![Demo](d:\ailegacycodemigration.gif)
+![Demo](other/ailegacycodemigration.gif)
 
 ![Dashboard screenshot](other/image.png)
 

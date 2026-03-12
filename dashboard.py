@@ -196,7 +196,10 @@ if st.session_state.summary:
         net.repulsion(node_distance=150, spring_length=120)
         net.set_options(options)
         net.save_graph("reports/graph.html")
-        st.components.v1.html(open("reports/graph.html").read(), height=650)
+        html_content = open("reports/graph.html", "r", encoding="utf-8").read()
+        col_l, col_c, col_r = st.columns([1, 6, 1])
+        with col_c:
+            st.components.v1.html(html_content, height=650)
     else:
         st.info("No dependencies found.")
 
@@ -225,13 +228,52 @@ if st.session_state.summary:
                             symbol_level=symbol_level,
                             resolve_to_files=resolve_files,
                         )
-                        outs = save_graph(g, out_dir="reports", name="full_dep_graph")
-                        term_log(f"✅ Graph saved: {outs}")
-                        if outs.get("html") and os.path.exists(outs.get("html")):
-                            html = open(outs.get("html"), "r", encoding="utf-8").read()
-                            st.components.v1.html(html, height=700)
-                        else:
-                            st.success(f"Graph saved to {outs.get('graphml')}")
+                        # Always write graphml for export
+                        try:
+                            nx.write_graphml(g, "reports/full_dep_graph.graphml")
+                        except Exception:
+                            pass
+
+                        # Try using pyvis directly to generate HTML and display it
+                        try:
+                            net = Network(
+                                height="800px",
+                                width="100%",
+                                bgcolor="#111",
+                                font_color="white",
+                            )
+                            net.from_nx(g)
+                            try:
+                                net.repulsion(node_distance=150, spring_length=120)
+                            except Exception:
+                                pass
+                            net.set_options(options)
+                            html_path = "reports/full_dep_graph.html"
+                            net.write_html(html_path)
+                            term_log(f"✅ Graph HTML written: {html_path}")
+                            if os.path.exists(html_path):
+                                html = open(html_path, "r", encoding="utf-8").read()
+                                col_l, col_c, col_r = st.columns([1, 8, 1])
+                                with col_c:
+                                    st.components.v1.html(html, height=800)
+                            else:
+                                st.success(
+                                    f"Graph saved to reports/full_dep_graph.graphml"
+                                )
+                        except Exception as e:
+                            term_log(f"⚠ pyvis render failed: {e}")
+                            # fallback to save_graph (may at least produce graphml)
+                            outs = save_graph(
+                                g, out_dir="reports", name="full_dep_graph"
+                            )
+                            term_log(f"✅ Graph saved: {outs}")
+                            if outs.get("html") and os.path.exists(outs.get("html")):
+                                html = open(
+                                    outs.get("html"), "r", encoding="utf-8"
+                                ).read()
+                                st.components.v1.html(html, height=700)
+                            else:
+                                st.success(f"Graph saved to {outs.get('graphml')}")
                     except Exception as e:
                         term_log(f"⚠ Error building graph: {e}")
                         st.error(f"Failed to build graph: {e}")

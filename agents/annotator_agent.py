@@ -7,6 +7,7 @@ import re
 from dotenv import load_dotenv
 
 from pathlib import Path
+from tools.graph_builder import build_repo_graph, save_graph
 
 console = Console()
 env_path = Path(__file__).resolve().parents[1] / ".env"
@@ -54,8 +55,18 @@ def summarize_file(file_path: str):
         return f"⚠ Exception while summarizing {file_path}: {e}"
 
 
-def annotate_repository(repo_path, extensions=[".vb", ".cs", ".py"], force=False):
-    """Summarize each relevant file, caching results."""
+def annotate_repository(
+    repo_path,
+    extensions=[".vb", ".cs", ".py"],
+    force=False,
+    build_graph=False,
+    graph_options=None,
+):
+    """Summarize each relevant file, caching results.
+
+    If `build_graph` is True, also generate a dependency graph and save it
+    into the `reports` folder. `graph_options` is forwarded to the graph builder.
+    """
     import json, time, os
 
     console.print(
@@ -96,4 +107,16 @@ def annotate_repository(repo_path, extensions=[".vb", ".cs", ".py"], force=False
                 json.dump(annotations, f, indent=2)
 
     console.print(f"[bold green]✅ File annotations saved to {save_path}[/bold green]")
+    # Optionally build dependency graph
+    if build_graph:
+        try:
+            opts = graph_options or {}
+            symbol_level = bool(opts.get("symbol_level", False))
+            console.print("[cyan]🔗 Building dependency graph...[/cyan]")
+            g = build_repo_graph(repo_path, symbol_level=symbol_level)
+            outs = save_graph(g, out_dir="reports")
+            console.print(f"[green]✅ Dependency graph saved:[/green] {outs}")
+        except Exception as e:
+            console.print(f"[red]⚠ Failed to build dependency graph: {e}[/red]")
+
     return annotations

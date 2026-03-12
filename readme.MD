@@ -2,6 +2,10 @@
 
 An AI-powered pair programmer that understands legacy codebases and helps refactor or migrate them intelligently. Point it at a repository containing legacy code (e.g. VB.NET), and it will analyse the structure, detect dependencies, generate a migration plan, and produce translated C# output — all driven by a large language model of your choice.
 
+## Demo
+
+![Demo](docs/ailegacycodemigration.webm)
+
 ![Dashboard screenshot](other/image.png)
 
 ---
@@ -43,10 +47,10 @@ All LLM calls are routed through `ai_provider.py`, which selects the configured 
 
 ## 🛠️ Prerequisites
 
-| Requirement | Version |
-|---|---|
-| Python | 3.10 + |
-| Git | any recent version |
+| Requirement | Version            |
+| ----------- | ------------------ |
+| Python      | 3.10 +             |
+| Git         | any recent version |
 
 > A valid API key for your chosen LLM provider is required (see [Configuration](#️-configuration)).
 
@@ -118,6 +122,7 @@ streamlit run dashboard.py
 Then open [http://localhost:8501](http://localhost:8501) in your browser.
 
 **Workflow inside the dashboard:**
+
 1. Paste a GitHub URL or a local folder path into the input box and click **🚀 Start Analysis**.
 2. The tool clones the repo, detects languages, analyses the project structure, and annotates every file.
 3. Browse the annotated file tree and the interactive dependency graph.
@@ -171,24 +176,24 @@ AIPairProgrammer_LegacyCodeMigration/
 
 ## 🔌 Supported LLM Providers
 
-| Provider | `AI_PROVIDER` value | Key env var |
-|---|---|---|
-| Google Gemini | `gemini` | `GEMINI_API_KEY` |
-| OpenRouter | `openrouter` | `OPENROUTER_API_KEY` |
-| Hugging Face Inference API | `huggingface` | `HUGGINGFACE_API_KEY` |
-| Ollama (local) | `ollama` | *(none – runs on localhost)* |
+| Provider                   | `AI_PROVIDER` value | Key env var                  |
+| -------------------------- | ------------------- | ---------------------------- |
+| Google Gemini              | `gemini`            | `GEMINI_API_KEY`             |
+| OpenRouter                 | `openrouter`        | `OPENROUTER_API_KEY`         |
+| Hugging Face Inference API | `huggingface`       | `HUGGINGFACE_API_KEY`        |
+| Ollama (local)             | `ollama`            | _(none – runs on localhost)_ |
 
 ---
 
 ## 🗺️ Roadmap
 
-| Phase | Goal | Status |
-|---|---|---|
-| 1 | Contextual Understanding – project structure & dependency map | ✅ Done |
-| 2 | Multi-Agent Orchestration (Analyser → Planner → Translator) | ✅ Done |
-| 3 | Semantic Migration & context retention (SQLite / vector store) | 🔜 Planned |
-| 4 | Validation – Roslyn / `dotnet build` feedback loop | 🔜 Planned |
-| 5 | VSCode extension or Next.js web UI | 🔜 Planned |
+| Phase | Goal                                                           | Status     |
+| ----- | -------------------------------------------------------------- | ---------- |
+| 1     | Contextual Understanding – project structure & dependency map  | ✅ Done    |
+| 2     | Multi-Agent Orchestration (Analyser → Planner → Translator)    | ✅ Done    |
+| 3     | Semantic Migration & context retention (SQLite / vector store) | 🔜 Planned |
+| 4     | Validation – Roslyn / `dotnet build` feedback loop             | 🔜 Planned |
+| 5     | VSCode extension or Next.js web UI                             | 🔜 Planned |
 
 ---
 

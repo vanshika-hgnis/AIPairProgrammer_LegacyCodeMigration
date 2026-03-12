@@ -13,6 +13,7 @@ from textwrap import shorten
 from pyvis.network import Network
 
 from agents.annotator_agent import annotate_repository
+from tools.graph_builder import build_repo_graph, save_graph
 
 
 options = """
@@ -198,6 +199,47 @@ if st.session_state.summary:
         st.components.v1.html(open("reports/graph.html").read(), height=650)
     else:
         st.info("No dependencies found.")
+
+    # ---- Full Repo Dependency Graph (multi-language) ----
+    st.divider()
+    st.subheader("🔎 Full Repo Dependency Graph (multi-language)")
+
+    col_a, col_b = st.columns([1, 2])
+    with col_a:
+        symbol_level = st.checkbox(
+            "Include symbol-level nodes (Python only)", value=False
+        )
+        resolve_files = st.checkbox(
+            "Resolve imports to project files when possible", value=True
+        )
+
+        if st.button("🛠️ Build Full Dependency Graph"):
+            if not st.session_state.get("repo_path"):
+                st.error("Repository not loaded. Run analysis first.")
+            else:
+                term_log("🔧 Building full dependency graph...")
+                with st.spinner("Building graph (this may take a while)..."):
+                    try:
+                        g = build_repo_graph(
+                            st.session_state.repo_path,
+                            symbol_level=symbol_level,
+                            resolve_to_files=resolve_files,
+                        )
+                        outs = save_graph(g, out_dir="reports", name="full_dep_graph")
+                        term_log(f"✅ Graph saved: {outs}")
+                        if outs.get("html") and os.path.exists(outs.get("html")):
+                            html = open(outs.get("html"), "r", encoding="utf-8").read()
+                            st.components.v1.html(html, height=700)
+                        else:
+                            st.success(f"Graph saved to {outs.get('graphml')}")
+                    except Exception as e:
+                        term_log(f"⚠ Error building graph: {e}")
+                        st.error(f"Failed to build graph: {e}")
+
+    with col_b:
+        st.info(
+            "Use this tool to build an interactive visualization of imports and symbol relationships across the repository. Click the button to generate and view the graph."
+        )
 
 if st.session_state.lang_info:
     st.divider()
